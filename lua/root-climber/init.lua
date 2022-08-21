@@ -1,33 +1,10 @@
+local utils = require('root-climber.utils')
+
 local M = {}
 
 P = function(v)
   print(vim.inspect(v))
   return v
-end
-
-local split = function(str, pat)
-  local t = {}
-  local fpat = "(.-)" .. pat
-  local last_end = 1
-  local s, e, cap = str:find(fpat, 1)
-  while s do
-    if s ~= 1 or cap ~= "" then
-      table.insert(t, cap)
-    end
-    last_end = e+1
-    s, e, cap = str:find(fpat, last_end)
-  end
-
-  if last_end <= #str then
-    cap = str:sub(last_end)
-    table.insert(t, cap)
-  end
-
-  return t
-end
-
-local split_path = function(path)
-   return split(path,'[\\/]+')
 end
 
 local function _climb(re_pattern, path)
@@ -52,17 +29,13 @@ local function _climb(re_pattern, path)
     return result;
   end
 
-  local path_table = split_path(path)
+  local path_table = utils.split_path(path)
   table.remove(path_table, #path_table)
   local up_path = '/' .. table.concat(path_table, '/')
 
   local recursion_result = _climb(re_pattern, up_path)
 
-  for _, v in ipairs(result) do
-    table.insert(recursion_result, v)
-  end
-
-  return recursion_result
+  return utils.concat_tables(recursion_result, result)
 end
 
 M.climb = function(pattern)
@@ -89,7 +62,9 @@ M.run = function(pattern)
 
   local option = vim.fn.inputlist(inputlist_options)
 
-  print("you choose " .. results[option])
+  if (option < 1 or option > #results) then
+    return nil
+  end
 
   return results[option]
 end
