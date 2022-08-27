@@ -7,7 +7,7 @@ P = function(v)
   return v
 end
 
-local function _climb(re_pattern, path)
+local function _climb(pattern, path)
   local cwd = vim.fn.getcwd()
 
   local ls_output = io.popen("ls -a " .. path):read"*all"
@@ -20,7 +20,7 @@ local function _climb(re_pattern, path)
 
   local result = {}
   for _, file in ipairs(files) do
-    if file:match(re_pattern) then
+    if file:match(pattern) then
       table.insert(result, path .. "/" .. file)
     end
   end
@@ -33,16 +33,15 @@ local function _climb(re_pattern, path)
   table.remove(path_table, #path_table)
   local up_path = '/' .. table.concat(path_table, '/')
 
-  local recursion_result = _climb(re_pattern, up_path)
+  local recursion_result = _climb(pattern, up_path)
 
   return utils.concat_tables(recursion_result, result)
 end
 
 M.climb = function(pattern)
-  local re_pattern = pattern:gsub("%*", "(%%w+)"):gsub("%.", "%%.")
   local current_file_path = vim.fn.expand('%:p:h')
 
-  return _climb(re_pattern, current_file_path)
+  return _climb(utils.match_file_mask(pattern), current_file_path)
 end
 
 local format_path = function(absolute_path)
@@ -51,7 +50,7 @@ local format_path = function(absolute_path)
   return string.sub(absolute_path, string.len(cwd) + 1 + slash_len, string.len(absolute_path))
 end
 
-M.run = function(pattern)
+M.run = function(pattern, callback)
   local results = M.climb(pattern)
 
   local inputlist_options = {'Select:'}
@@ -66,7 +65,32 @@ M.run = function(pattern)
     return nil
   end
 
-  return results[option]
+  callback(results[option])
+end
+
+M.fzf_run = function(pattern, callback)
+  local fzf_run = vim.fn["fzf#run"]
+  local fzf_wrap = vim.fn["fzf#wrap"]
+  local sinkfunc = function(path)
+    local cwd = vim.fn.getcwd()
+    local absolute_path = cwd .. "/" .. path
+    return callback(absolute_path)
+  end
+
+  local results = M.climb(pattern)
+  local formatted_results = {}
+
+  for _, v in ipairs(results) do
+    table.insert(formatted_results, format_path(v))
+  end
+
+  local wrapped = fzf_wrap({
+    source = formatted_results,
+    options = {},
+    sink = sinkfunc
+  })
+
+  fzf_run(wrapped)
 end
 
 return M

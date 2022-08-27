@@ -39,4 +39,17 @@ M.concat_tables = function(t1, t2)
   return result_table
 end
 
+M.match_file_mask = function(mask, file)
+  local splited_mask = split(mask,'[.]')
+
+  local mask_table = {}
+  for _, v in ipairs(splited_mask) do
+    if v ~= '*' then
+      table.insert(mask_table, v)
+    end
+  end
+
+  return table.concat(mask_table, '.')
+end
+
 return M
