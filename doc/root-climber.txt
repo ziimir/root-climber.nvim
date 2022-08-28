@@ -1,6 +1,6 @@
 ================================================================================
                                                              *root-climber.nvim*
 
-TODO
+Makes a list of files matching the mask from the call point to the project root
 
- vim:tw=78:ts=8:ft=help:norl:
+vim:tw=78:ts=8:ft=help:norl:
