@@ -62,7 +62,7 @@ local format_path = function(absolute_path)
 end
 
 local skip_confirm = function(results)
-  if not vim.g["root_climber#always_confirm"] and #results == 1 then
+  if vim.g["root_climber#always_confirm"] == 0 and #results == 1 then
     return true
   end
 
